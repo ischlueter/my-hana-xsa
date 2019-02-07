@@ -31,8 +31,6 @@ modules:
           key: ServiceName_2
           service: ~{the-service-name}
                             
-
-
   - name: srv
     type: nodejs
     path: srv
@@ -45,11 +43,19 @@ modules:
           url: '${default-url}'
     requires:
       - name: openSAPHANA-hdi-container
+  
   - name: web
     type: html5
     path: web
     requires:
       - name: openSAPHANA-uaa
+      - name: xsjs_api
+        group: destinations
+        properties:
+          name: xsjs_api
+          url: '~{url}'
+          forwardAuthToken: true 
+          
   - name: user_db
     type: hdb
     path: user_db
@@ -57,21 +63,30 @@ modules:
       - name: hdi_user_db
         properties:
           TARGET_CONTAINER: '~{user-container-name}'
+
+  - name: xsjs
+    type: nodejs
+    path: xsjs
+    provides:
+      - name: xsjs_api
+        properties:
+          url: '${default-url}'
+    requires:
+      - name: openSAPHANA-hdi-container
+      - name: openSAPHANA-uaa
+      - name: db
+
 resources:
   - name: openSAPHANA-hdi-container
     properties:
       hdi-container-name: '${service-name}'
     type: com.sap.xs.hdi-container
+
   - name: openSAPHANA-uaa
     type: com.sap.xs.uaa-space
     parameters:
       path: ./xs-security.json
-  - name: cross-container-service-1
-    parameters:
-      service-name: CROSS_SCHEMA_SFLIGHT
-    properties:
-      the-service-name: '${service-name}'
-    type: org.cloudfoundry.existing-service
+
   - name: hdi_user_db
     parameters:
       config:
@@ -79,6 +94,13 @@ resources:
     properties:
       user-container-name: '${service-name}'
     type: com.sap.xs.hdi-container
+
+  - name: cross-container-service-1
+    parameters:
+      service-name: CROSS_SCHEMA_SFLIGHT
+    properties:
+      the-service-name: '${service-name}'
+    type: org.cloudfoundry.existing-service
 
   - name: cross-container-service-2
     parameters:
